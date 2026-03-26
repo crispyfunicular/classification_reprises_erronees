@@ -1,8 +1,3 @@
-!uv add Nltk
-!uv add spacy
-!uv add scikit-learn
-!uv add pandas
-
 import csv
 import pandas as pd
 from sklearn.model_selection import train_test_split
