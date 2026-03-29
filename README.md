@@ -33,13 +33,13 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 > **Consigne :** *Diviser le corpus en train/test.*
 
 - ✅ **Split Train/Test :** Division du corpus en données d'entraînement et de test (en utilisant `stratify` pour conserver la proportion des 3 classes).
-- ✅ **Baseline :** Création d'un premier modèle simple (Régression Logistique + Random Forest) pour valider le bon fonctionnement du pipeline.
+- ✅ **Prétraitement :** Mise en place d'un `ColumnTransformer` pour imputer, normaliser et encoder les variables selon leur type.
 
-### 3. Modélisation (`3_baseline.py`, puis `4_tuning.py`)
+### 3. Modélisation (en cours) (`3_baseline.py`, puis `4_tuning.py`)
 
 > **Consigne :** *Testez un classifier (réfléchir ou demander l'avis de Vanessa) sur ces données en utilisant les informations comme les features.*
 
-- **Baseline :** Entraînement et évaluation de Régression Logistique + Random Forest (`3_baseline.py`).
+- ✅ **Baseline :** Entraînement et évaluation croisée (5-fold) de Régression Logistique + Random Forest (`3_baseline.py`).
 - **Sélection des features :** Identifier quelles caractéristiques linguistiques sont les plus pertinentes pour différencier les 3 types d'erreurs.
 - **Entraînement :** Tester et optimiser des classifieurs plus performants (XGBoost, SVM).
 - **Tuning :** Optimisation des hyperparamètres pour maximiser les performances.
@@ -48,7 +48,7 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 
 > **Consigne :** *Évaluer le classifieur si possible…*
 
-- **Évaluation fine :** Génération des métriques de classification (Précision, Rappel, F1-Score par classe).
-- **Matrice de confusion :** Création de la matrice de confusion pour visualiser les erreurs du modèle.
+- ✅ **Évaluation fine :** Génération des métriques de classification (Précision, Rappel, F1-Score par classe).
+- ✅ **Matrice de confusion :** Création de la matrice de confusion pour visualiser les erreurs du modèle.
 - **Analyse des erreurs :** Analyse qualitative (Pourquoi le modèle se trompe-t-il sur certaines phrases ?).
 - *(Bonus)* **Modèle de langage :** Tester un modèle de Deep Learning (type CamemBERT) utilisant uniquement le texte brut (`Contexte`).

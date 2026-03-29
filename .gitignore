@@ -1,2 +1,12 @@
+# Données et fichiers Excel
 dataset_erreurs_reprises.xlsx
+
+# Fichiers générés par les scripts
+data_preparees.pkl
+matrice.pkl
+*.pkl
+
+# Environnement virtuel et cache
 venv/
+__pycache__/
+*.pyc
