@@ -1,4 +1,18 @@
+"""
+1_matrice.py — Construction de la matrice de features
+
+Ce script charge le dataset brut (Excel) des erreurs de reprises anaphoriques,
+crée la variable cible (Target) à 3 classes à partir de TypeErreur1, et
+construit la matrice X (features numériques + catégorielles) ainsi que le
+vecteur y (classes d'erreurs). Il affiche un aperçu des dimensions, de la
+distribution de la target et des valeurs manquantes.
+
+Produit : matrice.pkl (X et y bruts, avant prétraitement) utilisé par
+2_preprocessing.py pour éviter de relire et re-traiter le fichier Excel.
+"""
+
 import pandas as pd
+import joblib
 
 # CHARGEMENT DES DONNÉES (à partir du fichier Excel)
 df = pd.read_excel('dataset_erreurs_reprises.xlsx')
@@ -58,3 +72,18 @@ print(X.isna().sum())
 print()
 print("Aperçu de la matrice (5 premières lignes)")
 print(X.head().to_string())
+
+# SAUVEGARDE
+# On exporte X et y bruts (avant tout prétraitement) dans un fichier
+# intermédiaire, pour que 2_preprocessing.py n'ait pas à relire le
+# fichier Excel ni à recréer la target depuis zéro.
+joblib.dump({
+    'X': X,
+    'y': y,
+    'features_numeriques':    features_numeriques,
+    'features_categorielles': features_categorielles
+}, 'matrice.pkl')
+
+print()
+print("✅ Matrice sauvegardée dans matrice.pkl")
+print("   → Lancer 2_preprocessing.py pour prétraiter et splitter les données.")
