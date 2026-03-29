@@ -14,11 +14,13 @@ Produit : matrice.pkl (X et y bruts, avant prétraitement) utilisé par
 import pandas as pd
 import joblib
 
-# CHARGEMENT DES DONNÉES (à partir du fichier Excel)
+# ============================================================
+# 1. CHARGEMENT DES DONNÉES (à partir du fichier Excel)
+# ============================================================
 df = pd.read_excel('dataset_erreurs_reprises.xlsx')
 
 # Création de la Target (= la variable que l'on cherche à prédire)
-# On renomme les valeurs de TypeErreur1 en 3 classes plus lisibles :
+# Les valeurs de TypeErreur1 sont renommées en 3 classes plus lisibles :
 mapping_target = {
     # E grammaticale : erreur accord, redoublement référence, mauvais usage pronom relatif...
     'E grammaticale': 'Problème_Grammatical',
@@ -35,7 +37,9 @@ df['Classe_erreur'] = df['TypeErreur1'].map(mapping_target)
 # Suppression des lignes où TypeErreur1 est vide (NaN)
 df = df.dropna(subset=['Classe_erreur'])
 
-# DÉFINITION DES FEATURES
+# ============================================================
+# 2. DÉFINITION DES FEATURES
+# ============================================================
 features_numeriques = [
     'Distance_phrases',
     'Distance_mots',
@@ -54,7 +58,9 @@ features_categorielles = [
 
 colonnes_utiles = features_numeriques + features_categorielles
 
-# CONSTRUCTION DE LA MATRICE
+# ============================================================
+# 3. CONSTRUCTION DE LA MATRICE
+# ============================================================
 # X = le tableau des features = la matrice
 # y = la colonne des réponses attendues = ce que le modèle doit prédire
 X = df[colonnes_utiles]
@@ -73,8 +79,10 @@ print()
 print("Aperçu de la matrice (5 premières lignes)")
 print(X.head().to_string())
 
-# SAUVEGARDE
-# On exporte X et y bruts (avant tout prétraitement) dans un fichier
+# ============================================================
+# 4. SAUVEGARDE
+# ============================================================
+# Exportation de X et y bruts (avant prétraitement) dans un fichier
 # intermédiaire, pour que 2_preprocessing.py n'ait pas à relire le
 # fichier Excel ni à recréer la target depuis zéro.
 joblib.dump({
@@ -85,5 +93,5 @@ joblib.dump({
 }, 'matrice.pkl')
 
 print()
-print("✅ Matrice sauvegardée dans matrice.pkl")
-print("   → Lancer 2_preprocessing.py pour prétraiter et splitter les données.")
+print("Matrice sauvegardée dans matrice.pkl")
+print("Lancer 2_preprocessing.py pour prétraiter et splitter les données.")
