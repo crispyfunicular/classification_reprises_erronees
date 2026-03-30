@@ -5,13 +5,44 @@ Ce projet est réalisé dans le cadre d'un travail de groupe (4 personnes) en Tr
 
 L'objectif principal est de **détecter et classer automatiquement des erreurs de reprises anaphoriques** dans des textes en français. À partir d'un jeu de données annoté, nous devons construire un pipeline de Machine Learning capable de classer ces erreurs en **3 grandes catégories (Target)** :
 1. **Problèmes grammaticaux** (ex: erreurs d'accord en genre/nombre).
-2. **Problèmes avec l’antécédent** (ex: antécédent flou, absent, ou trop de GN concurrents).
+2. **Problèmes avec l'antécédent** (ex: antécédent flou, absent, ou trop de GN concurrents).
 3. **Problèmes avec la reprise** (ex: mauvais choix du type de pronom).
+
+
+## Structure du projet
+
+```
+├── pipeline.py                      # Pipeline complète (matrice → prétraitement → baseline)
+├── dataset_erreurs_reprises.xlsx    # Jeu de données annoté
+├── rapport.md                       # Rapport technique détaillé
+├── requirements.txt                 # Dépendances Python
+└── README.md
+```
+
+## Installation
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Utilisation
+
+```bash
+python pipeline.py
+```
+
+Le script enchaîne automatiquement les trois étapes :
+
+1. **Construction de la matrice** — Charge le dataset Excel, crée la variable cible à 3 classes, et sélectionne les features pertinentes.
+2. **Prétraitement** — Applique un `ColumnTransformer` (imputation + normalisation pour le numérique, imputation + One-Hot Encoding pour le catégoriel) puis effectue un split train/test stratifié 80/20.
+3. **Évaluation baseline** — Entraîne une Régression Logistique et un Random Forest, affiche les métriques détaillées (accuracy, rapport de classification, matrice de confusion) et une cross-validation 5-fold.
 
 
 ## Plan d'action
 
-### 1. Préparation des données ✅ (`1_matrice.py`)
+### 1. Préparation des données ✅
 
 > **Consigne :** *Récupérer un fichier csv auprès de Vanessa Gaudray Bouju. Le fichier contient : la reprise, son antécédent, le contexte antérieur, le type de reprise, et d'autres infos. L'objectif est de classer les reprises erronées en 3 classes (problèmes grammaticaux, problèmes avec l'antécédent, problèmes avec la reprise).*
 **Postulat** : chaque type d'erreur est corrélé à des variables spécifiques
@@ -28,18 +59,18 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 - ✅ **Analyse Exploratoire (EDA) :** Étude de la distribution de la cible (vérification de l'équilibre des 3 classes) et observation des corrélations initiales.
 
 
-### 2. Architecture ✅ (`2_preprocessing.py`)
+### 2. Architecture ✅
 
 > **Consigne :** *Diviser le corpus en train/test.*
 
 - ✅ **Split Train/Test :** Division du corpus en données d'entraînement et de test (en utilisant `stratify` pour conserver la proportion des 3 classes).
 - ✅ **Prétraitement :** Mise en place d'un `ColumnTransformer` pour imputer, normaliser et encoder les variables selon leur type.
 
-### 3. Modélisation (en cours) (`3_baseline.py`, puis `4_tuning.py`)
+### 3. Modélisation (en cours)
 
 > **Consigne :** *Testez un classifier (réfléchir ou demander l'avis de Vanessa) sur ces données en utilisant les informations comme les features.*
 
-- ✅ **Baseline :** Entraînement et évaluation croisée (5-fold) de Régression Logistique + Random Forest (`3_baseline.py`).
+- ✅ **Baseline :** Entraînement et évaluation croisée (5-fold) de Régression Logistique + Random Forest.
 - **Sélection des features :** Identifier quelles caractéristiques linguistiques sont les plus pertinentes pour différencier les 3 types d'erreurs.
 - **Entraînement :** Tester et optimiser des classifieurs plus performants (XGBoost, SVM).
 - **Tuning :** Optimisation des hyperparamètres pour maximiser les performances.

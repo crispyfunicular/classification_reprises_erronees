@@ -12,7 +12,6 @@ Usage :
 
 import pandas as pd
 import numpy as np
-import joblib
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
