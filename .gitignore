@@ -1,9 +1,7 @@
 # Données et fichiers Excel
 dataset_erreurs_reprises.xlsx
 
-# Fichiers générés par les scripts
-data_preparees.pkl
-matrice.pkl
+# Fichiers binaires générés
 *.pkl
 
 # Environnement virtuel et cache
