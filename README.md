@@ -1,4 +1,6 @@
 # Classification des reprises anaphoriques erronées
+## Consignes
+<img src="consignes.png" alt="Consignes du Projet 7" width="600"/>
 
 ## Objectif
 Ce projet est réalisé dans le cadre d'un travail de groupe (4 personnes) en Traitement du Langage Naturel (NLP) / Machine Learning. 
@@ -11,8 +13,10 @@ L'objectif principal est de **détecter et classer automatiquement des erreurs d
 
 ## Structure du projet
 
-```
-├── pipeline.py                      # Pipeline complète (matrice → prétraitement → baseline)
+```text
+├── pipeline.py                      # Socle de base (matrice → prétraitement → baseline)
+├── amelioration.py                  # Script avancé (optimisation GridSearchCV + feature importance)
+├── visualisation.py                 # Module dédié à l'export du rapport HTML qualitatif
 ├── dataset_erreurs_reprises.xlsx    # Jeu de données annoté
 ├── rapport.md                       # Rapport technique détaillé
 ├── requirements.txt                 # Dépendances Python
@@ -29,20 +33,30 @@ pip install -r requirements.txt
 
 ## Utilisation
 
+Le pipeline de Machine Learning a été conçu de manière modulaire en deux grandes étapes :
+
+### Étape 1 : Socle de base
 ```bash
 python pipeline.py
 ```
+Ce script pose les fondations du ML sur notre jeu de données :
+1. **Construction de la matrice** : Chargement des données Excel et création de la variable cible (Grammaire, Antécédent, Reprise).
+2. **Prétraitement** : Nettoyage des données manquantes, normalisation des distances et encodage (One-Hot) des variables catégorielles.
+3. **Évaluation baseline** : Création d'une première version "brute" (sans réglages) de nos modèles pour obtenir un score point de départ de référence.
 
-Le script enchaîne automatiquement les trois étapes :
-
-1. **Construction de la matrice** — Charge le dataset Excel, crée la variable cible à 3 classes, et sélectionne les features pertinentes.
-2. **Prétraitement** — Applique un `ColumnTransformer` (imputation + normalisation pour le numérique, imputation + One-Hot Encoding pour le catégoriel) puis effectue un split train/test stratifié 80/20.
-3. **Évaluation baseline** — Entraîne une Régression Logistique et un Random Forest, affiche les métriques détaillées (accuracy, rapport de classification, matrice de confusion) et une cross-validation 5-fold.
+### Étape 2 : Optimisation et Analyse
+```bash
+python amelioration.py
+```
+C'est le script d'investigation avancée qui fait appel aux fondations de l'étape 1 pour pousser l'analyse plus loin :
+1. **Tuning (Recherche sur grille)** : Essai automatisé de dizaines de configurations différentes (hyperparamètres) pour trouver la version optimale de chaque algorithme.
+2. **Interprétabilité** : Extraction des variables linguistiques qui influencent le plus les diagnostics de la machine (*Feature Importance*).
+3. **Génération d'interface** : Création automatique d'un rapport visuel ergonomique (`analyse_erreurs.html`) exposant le texte, l'antécédent et la reprise pour analyser qualitativement à l'œil nu où la machine s'est trompée.
 
 
 ## Plan d'action
 
-### 1. Préparation des données ✅
+### 1. Préparation des données
 
 > **Consigne :** *Récupérer un fichier csv auprès de Vanessa Gaudray Bouju. Le fichier contient : la reprise, son antécédent, le contexte antérieur, le type de reprise, et d'autres infos. L'objectif est de classer les reprises erronées en 3 classes (problèmes grammaticaux, problèmes avec l'antécédent, problèmes avec la reprise).*
 **Postulat** : chaque type d'erreur est corrélé à des variables spécifiques
@@ -54,32 +68,31 @@ Le script enchaîne automatiquement les trois étapes :
 **Action technique :** Nous utiliserons un `ColumnTransformer` (via Scikit-Learn) pour appliquer le One-Hot Encoding uniquement sur les variables catégorielles pertinentes, normaliser les distances, et exclure le texte brut de nos modèles de Machine Learning classiques.
 
 Par conséquent, avant la modélisation, le jeu de données brut nécessite une mise en forme :
-- ✅ **Création de la Target (Variable Cible) :** Regroupement (mapping) des annotations détaillées (`TypeErreur`, `SousTypeErreur`) pour former notre variable cible unique à 3 classes (Grammaire, Antécédent, Reprise).
-- ✅ **Nettoyage :** Traitement des valeurs manquantes et exclusion des métadonnées inutiles.
-- ✅ **Analyse Exploratoire (EDA) :** Étude de la distribution de la cible (vérification de l'équilibre des 3 classes) et observation des corrélations initiales.
+- **Création de la Target (Variable Cible) :** Regroupement (mapping) des annotations détaillées (`TypeErreur`, `SousTypeErreur`) pour former notre variable cible unique à 3 classes (Grammaire, Antécédent, Reprise).
+- **Nettoyage :** Traitement des valeurs manquantes et exclusion des métadonnées inutiles.
+- **Analyse Exploratoire (EDA) :** Étude de la distribution de la cible (vérification de l'équilibre des 3 classes) et observation des corrélations initiales.
 
 
-### 2. Architecture ✅
+### 2. Architecture
 
 > **Consigne :** *Diviser le corpus en train/test.*
 
-- ✅ **Split Train/Test :** Division du corpus en données d'entraînement et de test (en utilisant `stratify` pour conserver la proportion des 3 classes).
-- ✅ **Prétraitement :** Mise en place d'un `ColumnTransformer` pour imputer, normaliser et encoder les variables selon leur type.
+- **Split Train/Test :** Division du corpus en données d'entraînement et de test (en utilisant `stratify` pour conserver la proportion des 3 classes).
+- **Prétraitement :** Mise en place d'un `ColumnTransformer` pour imputer, normaliser et encoder les variables selon leur type.
 
-### 3. Modélisation (en cours)
+### 3. Modélisation (en cours -> terminée)
 
 > **Consigne :** *Testez un classifier (réfléchir ou demander l'avis de Vanessa) sur ces données en utilisant les informations comme les features.*
 
-- ✅ **Baseline :** Entraînement et évaluation croisée (5-fold) de Régression Logistique + Random Forest.
-- **Sélection des features :** Identifier quelles caractéristiques linguistiques sont les plus pertinentes pour différencier les 3 types d'erreurs.
-- **Entraînement :** Tester et optimiser des classifieurs plus performants (XGBoost, SVM).
-- **Tuning :** Optimisation des hyperparamètres pour maximiser les performances.
+- **Baseline :** Entraînement et évaluation croisée (5-fold) de Régression Logistique + Random Forest (via `pipeline.py`).
+- **Sélection des features :** Extraction et analyse de l'importance des variables (Feature Importance) via le Random Forest optimisé, démontrant l'impact majeur des traits de distance (`Distance_caracteres`, `Distance_phrases`) et sémantiques.
+- **Tuning :** Optimisation stricte des hyperparamètres par grille de recherche (`GridSearchCV`) maximisant le score F1-macro.
 
 ### 4. Évaluation
 
 > **Consigne :** *Évaluer le classifieur si possible…*
 
-- ✅ **Évaluation fine :** Génération des métriques de classification (Précision, Rappel, F1-Score par classe).
-- ✅ **Matrice de confusion :** Création de la matrice de confusion pour visualiser les erreurs du modèle.
-- **Analyse des erreurs :** Analyse qualitative (Pourquoi le modèle se trompe-t-il sur certaines phrases ?).
+- **Évaluation fine :** Génération des métriques de classification (Précision, Rappel, F1-Score par classe).
+- **Matrice de confusion :** Création de la matrice de confusion pour visualiser les erreurs du modèle (dans la vue baseline).
+- **Analyse des erreurs :** Export automatisé d'un rapport ergonomique HTML (`analyse_erreurs.html`) permettant l'exploration qualitative des phrases mal classées avec leur contexte, l'antécédent et la reprise surlignés.
 - *(Bonus)* **Modèle de langage :** Tester un modèle de Deep Learning (type CamemBERT) utilisant uniquement le texte brut (`Contexte`).
