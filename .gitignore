@@ -8,3 +8,6 @@ dataset_erreurs_reprises.xlsx
 venv/
 __pycache__/
 *.pyc
+
+# Gestionnaire de dépendances uv (non universel dans ce projet)
+uv.lock
