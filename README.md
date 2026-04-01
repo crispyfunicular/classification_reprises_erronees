@@ -80,7 +80,7 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 - **Split Train/Test :** Division du corpus en données d'entraînement et de test (en utilisant `stratify` pour conserver la proportion des 3 classes).
 - **Prétraitement :** Mise en place d'un `ColumnTransformer` pour imputer, normaliser et encoder les variables selon leur type.
 
-### 3. Modélisation (en cours -> terminée)
+### 3. Modélisation
 
 > **Consigne :** *Testez un classifier (réfléchir ou demander l'avis de Vanessa) sur ces données en utilisant les informations comme les features.*
 
@@ -96,3 +96,14 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 - **Matrice de confusion :** Création de la matrice de confusion pour visualiser les erreurs du modèle (dans la vue baseline).
 - **Analyse des erreurs :** Export automatisé d'un rapport ergonomique HTML (`analyse_erreurs.html`) permettant l'exploration qualitative des phrases mal classées avec leur contexte, l'antécédent et la reprise surlignés.
 - *(Bonus)* **Modèle de langage :** Tester un modèle de Deep Learning (type CamemBERT) utilisant uniquement le texte brut (`Contexte`).
+
+---
+
+## Répartition du travail
+
+| Personne | Rôle | Tâche concrète |
+|---|---|---|
+| **1** | Architecture & Code | Pipeline complet (`pipeline.py`, `amelioration.py`, `visualisation.py`, `README.md`) |
+| **2** | Feature Engineering | Tester différentes combinaisons de features (ablation study : retirer/ajouter des variables, comparer features numériques vs. catégorielles) |
+| **3** | Comparaison de modèles | Tester d'autres classificateurs (SVM, Gradient Boosting…) et/ou d'autres critères d'arbre (`gini` vs. `entropy`) |
+| **4** | Évaluation & Rapport | Comparer les métriques (`f1_macro`, `f1_weighted`, `balanced_accuracy`), analyser les erreurs qualitatives, rédiger discussion/conclusion/bibliographie |
