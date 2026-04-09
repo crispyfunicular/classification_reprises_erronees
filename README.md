@@ -17,7 +17,10 @@ L'objectif principal est de **détecter et classer automatiquement des erreurs d
 ├── pipeline.py                      # Socle de base (matrice → prétraitement → baseline)
 ├── amelioration.py                  # Script avancé (optimisation GridSearchCV + feature importance)
 ├── visualisation.py                 # Module dédié à l'export du rapport HTML qualitatif
-├── dataset_erreurs_reprises.xlsx    # Jeu de données annoté
+├── feature_engineering.py           # Script de Feature Engineering (extraction morphologique)
+├── evaluation_features.py           # Évaluation de l'impact du feature engineering
+├── dataset_erreurs_reprises.xlsx    # Jeu de données brut annoté
+├── dataset_enrichi.xlsx             # Jeu de données enrichi avec les nouvelles variables
 ├── rapport.md                       # Rapport technique détaillé
 ├── requirements.txt                 # Dépendances Python
 └── README.md
@@ -33,7 +36,7 @@ pip install -r requirements.txt
 
 ## Utilisation
 
-Le pipeline de Machine Learning a été conçu de manière modulaire en deux grandes étapes :
+Le pipeline de Machine Learning a été conçu de manière modulaire en plusieurs grandes étapes :
 
 ### Étape 1 : Socle de base
 ```bash
@@ -44,7 +47,7 @@ Ce script pose les fondations du ML sur notre jeu de données :
 2. **Prétraitement** : Nettoyage des données manquantes, normalisation des distances et encodage (One-Hot) des variables catégorielles.
 3. **Évaluation baseline** : Création d'une première version "brute" (sans réglages) de nos modèles pour obtenir un score point de départ de référence.
 
-### Étape 2 : Optimisation et Analyse
+### Étape 2 : Optimisation et analyse
 ```bash
 python amelioration.py
 ```
@@ -52,6 +55,16 @@ C'est le script d'investigation avancée qui fait appel aux fondations de l'éta
 1. **Tuning (Recherche sur grille)** : Essai automatisé de dizaines de configurations différentes (hyperparamètres) pour trouver la version optimale de chaque algorithme.
 2. **Interprétabilité** : Extraction des variables linguistiques qui influencent le plus les diagnostics de la machine (*Feature Importance*).
 3. **Génération d'interface** : Création automatique d'un rapport visuel ergonomique (`analyse_erreurs.html`) exposant le texte, l'antécédent et la reprise pour analyser qualitativement à l'œil nu où la machine s'est trompée.
+
+### Étape 3 : Feature Engineering
+```bash
+python feature_engineering.py
+python evaluation_features.py
+```
+Ce module spécialisé enrichit considérablement les données avant modélisation :
+1. **Extraction Morphologique** : Convertit le texte brut des pronoms en variables numériques structurées (ex: `elle` → Genre=F, Nombre=S).
+2. **Accord** : Ajoute des colonnes évaluant la concordance morphologique (`Match_genre`, `Match_nombre`) entre l'antécédent et sa reprise.
+3. **Gain de performance** : Le F1-score progresse de 0.34 à 0.55, avec une amélioration particulièrement marquée sur la classe « E grammaticale ».
 
 
 ## Plan d'action
