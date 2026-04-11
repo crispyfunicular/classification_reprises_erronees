@@ -1,4 +1,5 @@
 # Projet 7 : Classification automatique de reprises erronées
+> Morgane Bona-Pellissier, Salma Chatoui, Daria Tupikina et Sarah Yaya (Master 1 pluriTAL)
 
 ## Élaboration de la pipeline
 
