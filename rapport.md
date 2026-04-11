@@ -43,10 +43,13 @@ La fonction `evaluer_baselines()` établit les premières performances de réfé
 - **Entraînement et évaluation sur le jeu de test** : chaque modèle est entraîné sur les données Train (`fit`), puis évalué sur le Test, produisant l'accuracy, un rapport détaillé de classification (précision, rappel, F1-score par classe) ainsi qu'une matrice de confusion.
 - **Validation croisée (Cross-validation 5-fold)** : comme le jeu de données est restreint (299 exemples), le script effectue une validation croisée sur l'ensemble du jeu de données (5 partitions) afin d'obtenir une estimation plus robuste et stabilisée des performances, en mesurant le F1-score macro.
 
-### Étape 4 :
+### Étape 4 : Optimisation et Analyse Qualitative des Erreurs (`amelioration.py`)
 
+Afin de maximiser les performances de nos algorithmes et rendre le modèle intelligible pour l'analyse linguistique, nous avons créé un script dédié à l'optimisation, `amelioration.py`. Ce script procède aux étapes suivantes :
 
-## Discussion des résultats
+1. **Optimisation des hyperparamètres (Tuning)** : Utilisation de `GridSearchCV` (Validation Croisée sur 5 Folds) pour tester méthodiquement une grille exhaustive de paramètres sur la *Régression Logistique* (paramètres de régularisation `C`, `solver`) et le *Random Forest* (profondeur maximale, nombre d'arbres `n_estimators`, critère de séparation). Le but est de trouver la configuration maximisant le F1-score au-delà de la baseline existante.
+2. **Interprétabilité (Feature Importance)** : Une fois le meilleur modèle non-linéaire (Random Forest) entraîné, nous extrayons l'importance relative de chaque caractéristique (Feature Importance). Cette étape permet de justifier notre **postulat initial** : le modèle se base effectivement majoritairement sur les distances (en caractères, mots, phrases) et sur la similarité sémantique plutôt que de deviner au hasard.
+3. **Analyse Qualitative des Erreurs** : L'évaluation mathématique (Accuracy, F1-score) est indispensable mais insuffisante en NLP structuré. Pour répondre au besoin qualitatif, le script exporte un document de diagnostic (`analyse_erreurs.html`). Ce rapport confronte dynamiquement la classe attendue ("Vraie Classe") et l'erreur du classifieur ("Classe Prédite"). Il intègre le contexte textuel brut avec surlignage interactif de l'antécédent et de la reprise, facilitant l'exploration et la formulation de nouvelles hypothèses linguistiques.## Discussion des résultats
 
 
 ## Conclusion
