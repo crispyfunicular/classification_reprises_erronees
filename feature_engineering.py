@@ -270,7 +270,7 @@ def match_morpho(val1, val2):
 # ---------------------------------------------------------------------------
 
 def enrichir_dataset(chemin_entree, chemin_sortie):
-    df = pd.read_excel(chemin_entree)
+    df = pd.read_csv(chemin_entree)
 
     # Nettoyage du nom de colonne TypeErreur (contient parfois \xa0)
     df.columns = [c.strip().replace('\xa0', '') for c in df.columns]
@@ -313,7 +313,7 @@ def enrichir_dataset(chemin_entree, chemin_sortie):
 
     df_features = pd.DataFrame(nouvelles_features)
     df_enrichi = pd.concat([df, df_features], axis=1)
-    df_enrichi.to_excel(chemin_sortie, index=False)
+    df_enrichi.to_csv(chemin_sortie, index=False)
     print(f"Dataset enrichi sauvegardé : {chemin_sortie}")
     print(f"Nouvelles colonnes : {df_features.columns.tolist()}")
     return df_enrichi
@@ -325,8 +325,8 @@ def enrichir_dataset(chemin_entree, chemin_sortie):
 
 
 if __name__ == "__main__":
-    ENTREE = "dataset_erreurs_reprise.xlsx"
-    SORTIE = "dataset_enrichi.xlsx"
+    ENTREE = "dataset_erreurs_reprises.csv"
+    SORTIE = "dataset_enrichi.csv"
 
     df = enrichir_dataset(ENTREE, SORTIE)
 

@@ -26,7 +26,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 # 1. CONSTRUCTION DE LA MATRICE DE FEATURES
 # ============================================================
 
-def construire_matrice(chemin_excel):
+def construire_matrice(chemin:str, features:list[str]):
     """
     Charge le dataset brut (Excel) des erreurs de reprises anaphoriques,
     crée la variable cible (Target) à 3 classes à partir de TypeErreur1, et
@@ -34,49 +34,32 @@ def construire_matrice(chemin_excel):
     vecteur y (classes d'erreurs). Affiche un aperçu des dimensions, de la
     distribution de la target et des valeurs manquantes.
     """
-    df = pd.read_excel(chemin_excel)
+    if '.xlsx' in chemin:
+        df = pd.read_excel(chemin)
+    elif'.csv' in chemin:
+        df= pd.read_csv(chemin)
 
     # Création de la Target (= la variable que l'on cherche à prédire)
-    # Les valeurs de TypeErreur1 sont renommées en 3 classes plus lisibles :
+    # Les valeurs de TypeErreur sont renommées en 3 classes plus lisibles :
     mapping_target = {
         # E grammaticale : erreur accord, redoublement référence, mauvais usage pronom relatif...
         'E grammaticale': 'Problème_Grammatical',
         # E antecedent : ambiguïté, antécédent non inférable, antécédent trop distant...
-        'E antecedent':   'Problème_Antecedent',
+        'E antécédent':   'Problème_Antecedent',
         # E reprise : mauvais choix lexical, flou, répétition et redondance...
         'E reprise':      'Problème_Reprise'
     }
 
-    # .map() remplace chaque valeur de TypeErreur1 par la classe correspondante
+    # .map() remplace chaque valeur de TypeErreur par la classe correspondante
     # Si la valeur n'est pas dans le dictionnaire, .map() renvoie NaN
-    df['Classe_erreur'] = df['TypeErreur1'].map(mapping_target)
+    df['Classe_erreur'] = df['TypeErreur'].map(mapping_target)
 
     # Suppression des lignes où TypeErreur1 est vide (NaN)
     df = df.dropna(subset=['Classe_erreur'])
 
-    # -- Définition des features --
-
-    features_numeriques = [
-        'Distance_phrases',
-        'Distance_mots',
-        'Distance_caracteres',
-        'GN_concurrents',
-        'GN_concurrents_compatibles',
-        'Similarite_reprise_antecedent'
-    ]
-
-    features_categorielles = [
-        'Type_pronom',
-        'Definitude_GN',
-        'Fonction_reprise',
-        'Fonction_antecedent'
-    ]
-
-    colonnes_utiles = features_numeriques + features_categorielles
-
     # X = le tableau des features = la matrice
     # y = la colonne des réponses attendues = ce que le modèle doit prédire
-    X = df[colonnes_utiles]
+    X = df[features]
     y = df['Classe_erreur']
 
     # APERÇU
@@ -93,7 +76,7 @@ def construire_matrice(chemin_excel):
     print(X.head().to_string())
     print()
 
-    return X, y, features_numeriques, features_categorielles
+    return X, y
 
 
 # ============================================================
@@ -326,13 +309,12 @@ def evaluer_baselines(X_train, X_test, y_train, y_test):
     for nom, acc in resultats.items():
         print(f"  {nom:30s} → Accuracy = {acc:.3f}")
     print()
-
-
+    return resultats
 # ============================================================
 # EXÉCUTION
 # ============================================================
 
 if __name__ == "__main__":
-    X, y, features_num, features_cat = construire_matrice("dataset_erreurs_reprises.xlsx")
+    X, y, features_num, features_cat = construire_matrice("dataset_erreurs_reprises.csv",features)
     X_train, X_test, y_train, y_test, preprocesseur = pretraiter(X, y, features_num, features_cat)
     evaluer_baselines(X_train, X_test, y_train, y_test)
