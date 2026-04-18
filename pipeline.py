@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score, balanced_accuracy_score
 
 
 # ============================================================
@@ -246,14 +246,14 @@ def evaluer_baselines(X_train, X_test, y_train, y_test):
         # 3. Évaluation globale : le pourcentage de bonnes réponses (accuracy) est calculé
         # en comparant ses prédictions (y_pred) avec la réalité (y_test)
         accuracy = accuracy_score(y_test, y_pred)
-        resultats[nom] = accuracy
+        #f1 macro
+        f1_macro= f1_score(y_test, y_pred,average='macro')
+        #f1 weighted
+        f1_weighted= f1_score(y_test, y_pred,average='weighted')
+        # balanced_accuracy_
+        balanced_accurracy= balanced_accuracy_score(y_test, y_pred)
+        resultats[nom] = (f1_macro,  f1_weighted, balanced_accurracy)
 
-        # 4. Affichage des performances détaillées
-        # "Accuracy" = réussite globale
-        print("=" * 60)
-        print(f"Modèle : {nom}")
-        print(f"Accuracy : {accuracy:.3f}")
-        print()
 
         # Le rapport de classification donne le détail de réussite pour chaque type d'erreur.
         # Utile pour savoir si le modèle est bon en grammaire mais mauvais sur les antécédents (par exemple).
@@ -302,13 +302,7 @@ def evaluer_baselines(X_train, X_test, y_train, y_test):
         print(f"  F1-macro moyen    : {scores.mean():.3f} (± {scores.std():.3f})")
         print()
 
-    # -- Résumé --
-    print("=" * 60)
-    print("Résumé : Comparaison des modèles (accuracy sur le split test)")
-    print("=" * 60)
-    for nom, acc in resultats.items():
-        print(f"  {nom:30s} → Accuracy = {acc:.3f}")
-    print()
+
     return resultats
 # ============================================================
 # EXÉCUTION
