@@ -51,9 +51,47 @@ Afin de maximiser les performances de nos algorithmes et rendre le modèle intel
 2. **Interprétabilité (Feature Importance)** : Une fois le meilleur modèle non-linéaire (Random Forest) entraîné, nous extrayons l'importance relative de chaque caractéristique (Feature Importance). Cette étape permet de justifier notre **postulat initial** : le modèle se base effectivement majoritairement sur les distances (en caractères, mots, phrases) et sur la similarité sémantique plutôt que de deviner au hasard.
 3. **Analyse Qualitative des Erreurs** : L'évaluation mathématique (Accuracy, F1-score) est indispensable mais insuffisante en NLP structuré. Pour répondre au besoin qualitatif, le script exporte un document de diagnostic (`analyse_erreurs.html`). Ce rapport confronte dynamiquement la classe attendue ("Vraie Classe") et l'erreur du classifieur ("Classe Prédite"). Il intègre le contexte textuel brut avec surlignage interactif de l'antécédent et de la reprise, facilitant l'exploration et la formulation de nouvelles hypothèses linguistiques.## Discussion des résultats
 
+**Tableau récapitulatif des résultats**
+Quatre combinaisons dataset × méthode ont été évaluées, produisant huit configurations au total (deux modèles par combinaison).
+Les résultats sont rassemblés dans le tableau suivant.
 
+	Dataset	Methode	Modele	F1_macro	F1_weighted	Balanced_accuracy
+0	Base	Baseline	LogisticRegression	0.3681	0.3653	0.4083
+1	Base	Baseline	RandomForest	0.5339	0.5677	0.5333
+2	Base	GridSearch	LogisticRegression	0.3883	0.385	0.3833
+3	Base	GridSearch	RandomForest	0.4545	0.4766	0.4583
+4	Enrichi	Baseline	LogisticRegression	0.6222	0.6449	0.6167
+5	Enrichi	Baseline	RandomForest	0.6128	0.6447	0.6083
+6	Enrichi	GridSearch	LogisticRegression	0.6591	0.6858	0.65
+7	Enrichi	GridSearch	RandomForest	0.5755	0.6005	0.5667
+
+**Choix des métriques et justification**
+Trois métriques complémentaires ont été retenues pour évaluer les modèles, en réponse au déséquilibre des classes observé dans le jeu de données (133 problèmes d'antécédent / 92 problèmes de reprise / 74 problèmes grammaticaux).
+- Le F1-macro est la métrique de référence de notre analyse : il calcule la moyenne non pondérée du F1-score de chaque classe, donnant ainsi le même poids aux trois catégories d'erreurs quelle que soit leur fréquence. Il pénalise fortement un modèle qui ignorerait la classe minoritaire (problèmes grammaticaux), ce qui correspond précisément à notre objectif de détection équilibrée.
+- Le F1-weighted pondère le F1-score par le nombre d'exemples de chaque classe. Il reflète la performance globale sur l'ensemble du corpus et tend à être plus élevé que le F1-macro, car les classes majoritaires, mieux apprises, tirent la moyenne vers le haut.
+- La balanced accuracy (moyenne des rappels par classe) constitue un second indicateur de robustesse face au déséquilibre et confirme les tendances observées avec le F1-macro.
+
+**Le feature engineering : levier décisif**
+L'apport le plus significatif ne vient pas du réglage des hyperparamètres, mais de l'enrichissement du jeu de données. En ajoutant des variables morphologiques (genre, nombre, type de pronom) et des indicateurs d'accord (Match_genre, Match_nombre), le F1-macro de la régression logistique passe de 0.368 à 0.622, soit une progression de +69 % avant même tout tuning. Le Random Forest progresse de son côté de 0.534 à 0.613 (+15 %).
+Ce résultat confirme que les features de base (distance caractères/mots et fonctions syntaxiques) ne capturent pas suffisamment les patterns discriminants entre les trois classes d'erreurs. Les variables morphologiques fournissent une information linguistiquement plus pertinente pour distinguer une erreur grammaticale d'un problème de reprise, car elles encodent directement les contraintes d'accord qui définissent ces deux types d'erreurs.
+**L'effet du GridSearch selon le dataset:**
+Le GridSearch ne produit pas le même effet selon la richesse du dataset.
+Sur le dataset base, l'optimisation des hyperparamètres n'améliore pas les résultats. Le F1-macro de la régression logistique stagne (0.368 -> 0.388), et celui du Random Forest chute de manière notable (0.534 -> 0.455, −0.079). 
+Avec seulement cinq variables disponibles, le modèle n'a pas de marge réelle d'optimisation : le GridSearch sur-ajuste la configuration aux particularités du jeu d'entraînement sans généraliser.
+Sur le dataset enrichi, l'effet est inverse pour la régression logistique : le GridSearch lui permet de progresser de 0.622 à 0.659 (+0.037), atteignant la meilleure performance de toutes les configurations testées. En revanche, le Random Forest enrichi régresse après tuning (0.613 -> 0.576, −0.037), ce qui suggère que la grille de recherche utilisée n'était pas adaptée à ce modèle sur ce jeu de données, ou que les arbres sur-apprennent les nouvelles features sans généraliser correctement.
+**La régression logistique surpasse le Random Forest:**
+Un résultat contre-intuitif ressort de cette comparaison : la configuration la plus performante associe un modèle linéaire simple (régression logistique) au dataset enrichi avec GridSearch. Le Random Forest, pourtant plus complexe et réputé pour sa capacité à capturer des interactions non-linéaires, ne parvient pas à le surpasser.
+Deux hypothèses expliquent ce résultat. D'une part, les variables morphologiques ajoutées (Match_genre, Match_nombre, Est_pronom) créent des frontières de décision quasi-linéaires entre les classes : un désaccord en genre est un signal binaire et direct, que la régression logistique exploite efficacement. D'autre part, le dataset reste petit (299 exemples), et les modèles complexes comme le Random Forest nécessitent davantage de données pour ne pas sur-apprendre, même avec class_weight='balanced'.
+**Cohérence entre les métriques**
+Les trois métriques sont globalement cohérentes : le classement des configurations ne change pas selon qu'on utilise le F1-macro, le F1-weighted ou la balanced accuracy. On note toutefois que le F1-weighted est systématiquement supérieur au F1-macro (de 0.02 à 0.03 points), ce qui confirme que les classes majoritaires sont mieux apprises que les classes rares. Cet écart persistant, même dans la meilleure configuration, indique une marge de progression spécifique sur la classe « problèmes grammaticaux ».
 ## Conclusion
 
+Ce projet a permis de construire un pipeline complet de classification automatique des reprises anaphoriques erronées en français, depuis la constitution du jeu de données jusqu'à l'analyse qualitative des erreurs du modèle.
+Quatre configurations ont été comparées de manière systématique, croisant deux datasets (base et enrichi) avec deux stratégies d'optimisation (baseline et GridSearch) sur deux algorithmes (régression logistique et Random Forest).
+Le résultat principal est sans ambiguïté : le feature engineering est la variable la plus impactante du pipeline, devant le choix du modèle et l'optimisation des hyperparamètres. L'ajout de variables morphologiques encodant les contraintes d'accord entre l'antécédent et la reprise fait progresser le F1-macro de +69 % pour la régression logistique, confirmant que ces traits linguistiques sont directement pertinents pour discriminer les trois classes d'erreurs. La meilleure configuration obtenue — régression logistique + dataset enrichi + GridSearch — atteint un F1-macro de 0.659, contre 0.368 pour le point de départ.
+Ce travail présente néanmoins plusieurs limites. 
+Le jeu de données annoté est de taille réduite (299 exemples), ce qui rend les estimations de performance sensibles au split train/test et limite la capacité des modèles complexes à généraliser. 
+Par ailleurs, les performances restent modestes en valeur absolue: un F1-macro de 0.66 signifie qu'un tiers des erreurs est encore mal classé, notamment dans la classe minoritaire « problèmes grammaticaux ».
 
 ## Bibliographie
 
