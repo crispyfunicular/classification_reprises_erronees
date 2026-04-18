@@ -1,0 +1,9 @@
+,Dataset,Methode,Modele,F1_macro,F1_weighted,Balanced_accuracy
+0,Base,Baseline,LogisticRegression,0.3681,0.3653,0.4083
+1,Base,Baseline,RandomForest,0.5339,0.5677,0.5333
+2,Base,GridSearch,LogisticRegression,0.3883,0.385,0.3833
+3,Base,GridSearch,RandomForest,0.4545,0.4766,0.4583
+4,Enrichi,Baseline,LogisticRegression,0.6222,0.6449,0.6167
+5,Enrichi,Baseline,RandomForest,0.6128,0.6447,0.6083
+6,Enrichi,GridSearch,LogisticRegression,0.6591,0.6858,0.65
+7,Enrichi,GridSearch,RandomForest,0.5755,0.6005,0.5667
