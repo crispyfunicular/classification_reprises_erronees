@@ -1,199 +1,237 @@
-from pipeline import construire_matrice , evaluer_baselines
-from amelioration    import pretraiter, optimiser_modeles
-from sklearn.metrics import accuracy_score, f1_score, balanced_accuracy_score
-from feature_engineering import enrichir_dataset
+"""
+scoring.py — Comparaison de configurations (dataset × méthode × modèle)
+
+Ce script compare 4 combinaisons :
+  1) Dataset base + modèles baseline
+  2) Dataset enrichi + modèles baseline
+  3) Dataset base + tuning (GridSearch)
+  4) Dataset enrichi + tuning (GridSearch)
+
+Référence: le pipeline `main` (dataset `.xlsx`, colonne `TypeErreur1`).
+"""
+
+from __future__ import annotations
+
 import pandas as pd
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import balanced_accuracy_score, f1_score
+from sklearn.model_selection import GridSearchCV
 
-'''On compare 4 combinaisons dataset × modèle et centralise tous les résultats
-dans un DataFrame pandas.'''
-features_base_num = [
-                 "DistanceCarac",
-                 "DistanceMot",
-
-                 ]
-features_base_cat = [
-                "FonctionRep",
-                "FonctionAnte",
-                "AnteAnnote",
-    ]
-features_base = features_base_num + features_base_cat
-# -- Définition des features --
-features_numeriques = [
-        "Longueur_reprise",
-        "Longueur_antecedent",
-        "Match_nombre",
-        "DistanceCarac",
-        "DistanceMot",
-    ]
-
-features_categorielles = [
-        "Nombre_reprise",
-        "Genre_reprise",
-        "Nombre_antecedent",
-        "Match_genre",
-         "Genre_antecedent",
-         "Est_pronom",
-         "Type_pronom_detaille",
-         "TypeReprise",
-         "AnteAnnote",
-         "FonctionRep",
-         "FonctionAnte"
-    ]
-features = features_numeriques + features_categorielles
-
-##1 score texte base
-print("[1/4]  Dataset BASE  +  Modèles BASELINE")
-X_base, y_base = construire_matrice("dataset_erreurs_reprises.csv", features_base)
-X_base_train_prep, X_base_test_prep, y_base_train, y_base_test, preprocesseur =pretraiter(X_base, y_base, features_base_num, features_base_cat)
-score_base = evaluer_baselines(X_base_train_prep, X_base_test_prep, y_base_train, y_base_test)
+from feature_engineering import enrichir_dataset
+from pipeline import pretraiter
 
 
-##2 score texte enrichi par des features
-print("[2/4]  Dataset Enrichi  +  Modèles BASELINE")
-dff_enrichi= enrichir_dataset("dataset_erreurs_reprises.csv","dataset_enrichi.csv")
-X_enrichi, y_enrichi= construire_matrice("dataset_enrichi.csv",features)
-X_enr_train_prep, X_enr_test_prep, y_enr_train, y_enr_test, preprocesseur = pretraiter(X_enrichi, y_enrichi,features_numeriques, features_categorielles)
-score_enrichi = evaluer_baselines(X_enr_train_prep, X_enr_test_prep, y_enr_train, y_enr_test)
+DATASET_BASE_XLSX = "dataset_erreurs_reprises.xlsx"
+DATASET_ENRICHI_XLSX = "dataset_enrichi.xlsx"
 
 
-
-##3 base + tuning
-print("[3/4]  Dataset BASE  +  Tuning (GridSearch)")
-base_lr, base_rf = optimiser_modeles(X_base_train_prep, y_base_train,'f1_macro' )
-y_base_pred_lr = base_lr.predict(X_base_test_prep)
-#f1 macro
-score_tun_lr_f1_macro= f1_score(y_base_test,y_base_pred_lr, average='macro')
-#f1 weighted
-score_tun_lr_f1_weighted= f1_score(y_base_test,y_base_pred_lr,average='weighted')
-# balanced_accuracy_
-score_tune_lr_acc= balanced_accuracy_score(y_base_test,y_base_pred_lr)
+MAPPING_TARGET = {
+    "E grammaticale": "Problème_Grammatical",
+    "E antecedent": "Problème_Antecedent",
+    "E reprise": "Problème_Reprise",
+}
 
 
-y_base_pred_rf = base_rf.predict(X_base_test_prep)
-#f1 macro
-score_tun_rf_f1_macro= f1_score(y_base_test, y_base_pred_rf,average='macro')
-#f1 weighted
-score_tun_rf_f1_weighted= f1_score(y_base_test, y_base_pred_rf,average='weighted')
-# balanced_accuracy_
-score_tune_rf_acc= balanced_accuracy_score(y_base_test, y_base_pred_rf)
+FEATURES_BASE_NUM = [
+    "Distance_phrases",
+    "Distance_mots",
+    "Distance_caracteres",
+    "GN_concurrents",
+    "GN_concurrents_compatibles",
+    "Similarite_reprise_antecedent",
+]
+
+FEATURES_BASE_CAT = [
+    "Type_pronom",
+    "Definitude_GN",
+    "Fonction_reprise",
+    "Fonction_antecedent",
+]
+
+FEATURES_ENRICHIES_NUM = FEATURES_BASE_NUM + [
+    "Longueur_reprise",
+    "Longueur_antecedent",
+    "Match_genre",
+    "Match_nombre",
+    "Est_pronom",
+]
+
+FEATURES_ENRICHIES_CAT = FEATURES_BASE_CAT + [
+    "Genre_reprise",
+    "Nombre_reprise",
+    "Genre_antecedent",
+    "Nombre_antecedent",
+    "Type_pronom_detaille",
+]
 
 
-##4 enrichi + tunning
-print("  [4/4]  Dataset Enrichi  +  Tuning (GridSearch)")
-mix_lr, mix_rf = optimiser_modeles(X_enr_train_prep, y_enr_train, 'f1_macro')
-y_enr_pred_lr = mix_lr.predict(X_enr_test_prep)
+def charger_xy_xlsx(path_xlsx: str, features_num: list[str], features_cat: list[str]):
+    df = pd.read_excel(path_xlsx)
+    df.columns = [c.strip().replace("\xa0", "") for c in df.columns]
 
-#f1 macro
-score_mixe_lr_f1_macro= f1_score(y_enr_test,y_enr_pred_lr, average='macro')
-#f1 weighted
-score_mixe_lr_f1_weighted= f1_score(y_enr_test,y_enr_pred_lr, average='weighted')
-# balanced_accuracy_
-score_mixe_lr_lr_acc= balanced_accuracy_score(y_enr_test,y_enr_pred_lr)
+    df["Classe_erreur"] = df["TypeErreur1"].map(MAPPING_TARGET)
+    df = df.dropna(subset=["Classe_erreur"])
 
-y_enr_pred_rf = mix_rf.predict(X_enr_test_prep)
-#f1 macro
-score_mixe_rf_f1_macro= f1_score(y_enr_test, y_enr_pred_rf, average='macro')
-#f1 weighted
-score_mixe_rf_f1_weighted= f1_score(y_enr_test, y_enr_pred_rf, average='weighted')
-# balanced_accuracy_
-score_mixe_rf_lr_acc= balanced_accuracy_score(y_enr_test, y_enr_pred_rf)
+    features = features_num + features_cat
+    X = df[features]
+    y = df["Classe_erreur"]
+    return X, y
 
 
+def entrainer_et_scorer_baselines(X_train_prep, X_test_prep, y_train, y_test):
+    modeles = {
+        "LogisticRegression": LogisticRegression(
+            max_iter=1000, class_weight="balanced", random_state=42
+        ),
+        "RandomForest": RandomForestClassifier(
+            n_estimators=100, class_weight="balanced", random_state=42
+        ),
+    }
 
-##Creation du dataframe lignes = differentes types de combinaisons // colonnes= scores
-#Base
-df_base    = pd.DataFrame([
-    {
-        "Modele"            : "LogisticRegression",
-        "F1_macro"          : score_base['Régression Logistique'][0],
-        "F1_weighted"       : score_base['Régression Logistique'][1],
-        "Balanced_accuracy" : score_base['Régression Logistique'][2],
-        "Dataset"           : "Base",
-        "Methode"           :"Baseline",
-        },
-        {
-        "Modele"            : "RandomForest",
-        "F1_macro"          : score_base['Random Forest'][0],
-        "F1_weighted"       : score_base['Random Forest'][1],
-        "Balanced_accuracy" : score_base['Random Forest'][2],
-        "Dataset"           : "Base",
-        "Methode"           :"Baseline",
+    scores = {}
+    for nom, modele in modeles.items():
+        modele.fit(X_train_prep, y_train)
+        y_pred = modele.predict(X_test_prep)
+        scores[nom] = (
+            f1_score(y_test, y_pred, average="macro"),
+            f1_score(y_test, y_pred, average="weighted"),
+            balanced_accuracy_score(y_test, y_pred),
+        )
+    return scores
+
+
+def optimiser_lr_rf_gridsearch(X_train_prep, y_train):
+    param_grid_lr = {
+        "C": [0.01, 0.1, 1, 10],
+        # 'liblinear' ne supporte pas le multi-classes (n_classes >= 3) en multinomial
+        "solver": ["lbfgs", "newton-cholesky"],
+        "class_weight": ["balanced", None],
+        "max_iter": [2000],
+    }
+    grid_lr = GridSearchCV(
+        LogisticRegression(random_state=42),
+        param_grid_lr,
+        cv=5,
+        scoring="f1_macro",
+        n_jobs=-1,
+    )
+    grid_lr.fit(X_train_prep, y_train)
+
+    param_grid_rf = {
+        "n_estimators": [50, 100, 200],
+        "max_depth": [None, 10, 20],
+        "min_samples_split": [2, 5, 10],
+        "class_weight": ["balanced", "balanced_subsample"],
+    }
+    grid_rf = GridSearchCV(
+        RandomForestClassifier(random_state=42),
+        param_grid_rf,
+        cv=5,
+        scoring="f1_macro",
+        n_jobs=-1,
+    )
+    grid_rf.fit(X_train_prep, y_train)
+
+    return grid_lr.best_estimator_, grid_rf.best_estimator_
+
+
+def scorer_modele(modele, X_test_prep, y_test):
+    y_pred = modele.predict(X_test_prep)
+    return (
+        f1_score(y_test, y_pred, average="macro"),
+        f1_score(y_test, y_pred, average="weighted"),
+        balanced_accuracy_score(y_test, y_pred),
+    )
+
+
+def main():
+    print("[1/4] Dataset BASE + Modèles BASELINE")
+    X_base, y_base = charger_xy_xlsx(DATASET_BASE_XLSX, FEATURES_BASE_NUM, FEATURES_BASE_CAT)
+    Xb_train, Xb_test, yb_train, yb_test, _ = pretraiter(
+        X_base, y_base, FEATURES_BASE_NUM, FEATURES_BASE_CAT
+    )
+    scores_base = entrainer_et_scorer_baselines(Xb_train, Xb_test, yb_train, yb_test)
+
+    print("[2/4] Dataset ENRICHI + Modèles BASELINE")
+    enrichir_dataset(DATASET_BASE_XLSX, DATASET_ENRICHI_XLSX)
+    X_enr, y_enr = charger_xy_xlsx(DATASET_ENRICHI_XLSX, FEATURES_ENRICHIES_NUM, FEATURES_ENRICHIES_CAT)
+    Xe_train, Xe_test, ye_train, ye_test, _ = pretraiter(
+        X_enr, y_enr, FEATURES_ENRICHIES_NUM, FEATURES_ENRICHIES_CAT
+    )
+    scores_enr = entrainer_et_scorer_baselines(Xe_train, Xe_test, ye_train, ye_test)
+
+    print("[3/4] Dataset BASE + Tuning (GridSearch)")
+    lr_base, rf_base = optimiser_lr_rf_gridsearch(Xb_train, yb_train)
+    scores_base_tun = {
+        "LogisticRegression": scorer_modele(lr_base, Xb_test, yb_test),
+        "RandomForest": scorer_modele(rf_base, Xb_test, yb_test),
+    }
+
+    print("[4/4] Dataset ENRICHI + Tuning (GridSearch)")
+    lr_enr, rf_enr = optimiser_lr_rf_gridsearch(Xe_train, ye_train)
+    scores_enr_tun = {
+        "LogisticRegression": scorer_modele(lr_enr, Xe_test, ye_test),
+        "RandomForest": scorer_modele(rf_enr, Xe_test, ye_test),
+    }
+
+    rows = []
+    for modele, (f1m, f1w, bacc) in scores_base.items():
+        rows.append(
+            {
+                "Dataset": "Base",
+                "Methode": "Baseline",
+                "Modele": modele,
+                "F1_macro": f1m,
+                "F1_weighted": f1w,
+                "Balanced_accuracy": bacc,
             }
-                           ])
-df_base["Dataset"]  = "Base"
-df_base["Methode"]  = "Baseline"
-#Enrichi
-df_enrichi = pd.DataFrame([
-    {
-        "Modele"            : "LogisticRegression",
-        "F1_macro"          : score_enrichi['Régression Logistique'][0],
-        "F1_weighted"       : score_enrichi['Régression Logistique'][1],
-        "Balanced_accuracy" : score_enrichi['Régression Logistique'][2],
-        "Dataset"           : "Enrichi",
-        "Methode"           : "Baseline",
-        },
-        {
-        "Modele"            : "RandomForest",
-        "F1_macro"          : score_enrichi['Random Forest'][0],
-        "F1_weighted"       : score_enrichi['Random Forest'][1],
-        "Balanced_accuracy" : score_enrichi['Random Forest'][2],
-        "Dataset"           : "Base",
-        "Methode"           :"Baseline",
+        )
+    for modele, (f1m, f1w, bacc) in scores_enr.items():
+        rows.append(
+            {
+                "Dataset": "Enrichi",
+                "Methode": "Baseline",
+                "Modele": modele,
+                "F1_macro": f1m,
+                "F1_weighted": f1w,
+                "Balanced_accuracy": bacc,
             }
-                            ])
-df_enrichi["Dataset"] = "Enrichi"
-df_enrichi["Methode"] = "Baseline"
+        )
+    for modele, (f1m, f1w, bacc) in scores_base_tun.items():
+        rows.append(
+            {
+                "Dataset": "Base",
+                "Methode": "GridSearch",
+                "Modele": modele,
+                "F1_macro": f1m,
+                "F1_weighted": f1w,
+                "Balanced_accuracy": bacc,
+            }
+        )
+    for modele, (f1m, f1w, bacc) in scores_enr_tun.items():
+        rows.append(
+            {
+                "Dataset": "Enrichi",
+                "Methode": "GridSearch",
+                "Modele": modele,
+                "F1_macro": f1m,
+                "F1_weighted": f1w,
+                "Balanced_accuracy": bacc,
+            }
+        )
 
-#Tuning – Dataset Base
-df_tuning_base = pd.DataFrame([
-    {
-        "Modele"            : "LogisticRegression",
-        "F1_macro"          : score_tun_lr_f1_macro,
-        "F1_weighted"       : score_tun_lr_f1_weighted,
-        "Balanced_accuracy" : score_tune_lr_acc,
-        "Dataset"           : "Base",
-        "Methode"           : "GridSearch",
-    },
-    {
-        "Modele"            : "RandomForest",
-        "F1_macro"          : score_tun_rf_f1_macro,
-        "F1_weighted"       : score_tun_rf_f1_weighted,
-        "Balanced_accuracy" : score_tune_rf_acc,
-        "Dataset"           : "Base",
-        "Methode"           : "GridSearch",
-    },
-])
+    df_resultats = (
+        pd.DataFrame(rows)
+        .round(4)
+        .sort_values(["Dataset", "Methode", "Modele"])
+        .reset_index(drop=True)
+    )
 
-#Tuning – Dataset Enrichi
-df_tuning_enrichi = pd.DataFrame([
-    {
-        "Modele"            : "LogisticRegression",
-        "F1_macro"          : score_mixe_lr_f1_macro,
-        "F1_weighted"       : score_mixe_lr_f1_weighted,
-        "Balanced_accuracy" : score_mixe_lr_lr_acc,
-        "Dataset"           : "Enrichi",
-        "Methode"           : "GridSearch",
-    },
-    {
-        "Modele"            : "RandomForest",
-        "F1_macro"          : score_mixe_rf_f1_macro,
-        "F1_weighted"       : score_mixe_rf_f1_weighted,
-        "Balanced_accuracy" : score_mixe_rf_lr_acc,
-        "Dataset"           : "Enrichi",
-        "Methode"           : "GridSearch",
-    },
-])
+    print(df_resultats.to_string(index=False))
+    df_resultats.to_csv("resultats_scoring.csv", index=False)
 
-df_resultats = (
-    pd.concat([df_base, df_enrichi, df_tuning_base, df_tuning_enrichi],
-              ignore_index=True)
-    .round(4)
-    [["Dataset", "Methode", "Modele", "F1_macro", "F1_weighted", "Balanced_accuracy"]]
-    .sort_values(["Dataset", "Methode", "Modele"])
-    .reset_index(drop=True)
-)
 
-print(df_resultats.to_string(index=False))
-#enregistrement des scores dans un CSV
-df_resultats.to_csv('resultats_scoring.csv')
+if __name__ == "__main__":
+    main()

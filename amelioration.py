@@ -24,10 +24,8 @@ from pipeline import construire_matrice, pretraiter
 # Import de la fonction d'interface visuelle depuis le module dédié
 from visualisation import exporter_erreurs_html
 
-SCORING_METRICS = ["f1_macro", "f1_weighted", "balanced_accuracy"]
 
-
-def optimiser_modeles(X_train, y_train, scoring):
+def optimiser_modeles(X_train, y_train):
     """
     Au lieu de se contenter des réglages par défaut, cette fonction utilise
     une grille de recherche (GridSearchCV). Elle va créer, entraîner et évaluer
@@ -42,7 +40,7 @@ def optimiser_modeles(X_train, y_train, scoring):
         # Différents niveaux de régularisation
         "C": [0.01, 0.1, 1, 10],
         # Différentes méthodes mathématiques de résolution
-        "solver": ["newton-cholesky", "lbfgs"],
+        "solver": ["liblinear", "lbfgs"],
         # Avec ou sans rééquilibrage automatique des classes
         "class_weight": ["balanced", None],
         # Assez de temps pour converger
@@ -56,7 +54,7 @@ def optimiser_modeles(X_train, y_train, scoring):
         LogisticRegression(random_state=42),
         param_grid_lr,
         cv=5,
-         scoring=scoring,
+        scoring="f1_macro",
         n_jobs=-1,
     )
     grid_lr.fit(X_train, y_train)
@@ -87,14 +85,24 @@ def optimiser_modeles(X_train, y_train, scoring):
         RandomForestClassifier(random_state=42),
         param_grid_rf,
         cv=5,
-        scoring=scoring,
+        scoring="f1_macro",
         n_jobs=-1,
     )
     grid_rf.fit(X_train, y_train)
     print(f"Meilleurs paramètres RF : {grid_rf.best_params_}")
     print(f"Meilleur score F1 (CV)  : {grid_rf.best_score_:.3f}")
 
-    return grid_lr.best_estimator_, grid_rf.best_estimator_
+    # Le script compare finalement la meilleure Régression Logistique au meilleur Random Forest
+    # pour renvoyer la meilleure version du meilleur algorithme.
+    if grid_lr.best_score_ > grid_rf.best_score_:
+        best_model = grid_lr.best_estimator_
+        best_name = "Régression Logistique optimisée"
+    else:
+        best_model = grid_rf.best_estimator_
+        best_name = "Random Forest optimisé"
+
+    return best_model, best_name
+
 
 def afficher_feature_importance(modele, preprocesseur, f_num, f_cat):
     """

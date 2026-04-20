@@ -19,14 +19,14 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score, balanced_accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 
 # ============================================================
 # 1. CONSTRUCTION DE LA MATRICE DE FEATURES
 # ============================================================
 
-def construire_matrice(chemin:str, features:list[str]):
+def construire_matrice(chemin_excel):
     """
     Charge le dataset brut (Excel) des erreurs de reprises anaphoriques,
     crée la variable cible (Target) à 3 classes à partir de TypeErreur1, et
@@ -34,32 +34,49 @@ def construire_matrice(chemin:str, features:list[str]):
     vecteur y (classes d'erreurs). Affiche un aperçu des dimensions, de la
     distribution de la target et des valeurs manquantes.
     """
-    if '.xlsx' in chemin:
-        df = pd.read_excel(chemin)
-    elif'.csv' in chemin:
-        df= pd.read_csv(chemin)
+    df = pd.read_excel(chemin_excel)
 
     # Création de la Target (= la variable que l'on cherche à prédire)
-    # Les valeurs de TypeErreur sont renommées en 3 classes plus lisibles :
+    # Les valeurs de TypeErreur1 sont renommées en 3 classes plus lisibles :
     mapping_target = {
         # E grammaticale : erreur accord, redoublement référence, mauvais usage pronom relatif...
         'E grammaticale': 'Problème_Grammatical',
         # E antecedent : ambiguïté, antécédent non inférable, antécédent trop distant...
-        'E antécédent':   'Problème_Antecedent',
+        'E antecedent':   'Problème_Antecedent',
         # E reprise : mauvais choix lexical, flou, répétition et redondance...
         'E reprise':      'Problème_Reprise'
     }
 
-    # .map() remplace chaque valeur de TypeErreur par la classe correspondante
+    # .map() remplace chaque valeur de TypeErreur1 par la classe correspondante
     # Si la valeur n'est pas dans le dictionnaire, .map() renvoie NaN
-    df['Classe_erreur'] = df['TypeErreur'].map(mapping_target)
+    df['Classe_erreur'] = df['TypeErreur1'].map(mapping_target)
 
     # Suppression des lignes où TypeErreur1 est vide (NaN)
     df = df.dropna(subset=['Classe_erreur'])
 
+    # -- Définition des features --
+
+    features_numeriques = [
+        'Distance_phrases',
+        'Distance_mots',
+        'Distance_caracteres',
+        'GN_concurrents',
+        'GN_concurrents_compatibles',
+        'Similarite_reprise_antecedent'
+    ]
+
+    features_categorielles = [
+        'Type_pronom',
+        'Definitude_GN',
+        'Fonction_reprise',
+        'Fonction_antecedent'
+    ]
+
+    colonnes_utiles = features_numeriques + features_categorielles
+
     # X = le tableau des features = la matrice
     # y = la colonne des réponses attendues = ce que le modèle doit prédire
-    X = df[features]
+    X = df[colonnes_utiles]
     y = df['Classe_erreur']
 
     # APERÇU
@@ -76,7 +93,7 @@ def construire_matrice(chemin:str, features:list[str]):
     print(X.head().to_string())
     print()
 
-    return X, y
+    return X, y, features_numeriques, features_categorielles
 
 
 # ============================================================
@@ -246,14 +263,14 @@ def evaluer_baselines(X_train, X_test, y_train, y_test):
         # 3. Évaluation globale : le pourcentage de bonnes réponses (accuracy) est calculé
         # en comparant ses prédictions (y_pred) avec la réalité (y_test)
         accuracy = accuracy_score(y_test, y_pred)
-        #f1 macro
-        f1_macro= f1_score(y_test, y_pred,average='macro')
-        #f1 weighted
-        f1_weighted= f1_score(y_test, y_pred,average='weighted')
-        # balanced_accuracy_
-        balanced_accurracy= balanced_accuracy_score(y_test, y_pred)
-        resultats[nom] = (f1_macro,  f1_weighted, balanced_accurracy)
+        resultats[nom] = accuracy
 
+        # 4. Affichage des performances détaillées
+        # "Accuracy" = réussite globale
+        print("=" * 60)
+        print(f"Modèle : {nom}")
+        print(f"Accuracy : {accuracy:.3f}")
+        print()
 
         # Le rapport de classification donne le détail de réussite pour chaque type d'erreur.
         # Utile pour savoir si le modèle est bon en grammaire mais mauvais sur les antécédents (par exemple).
@@ -302,13 +319,20 @@ def evaluer_baselines(X_train, X_test, y_train, y_test):
         print(f"  F1-macro moyen    : {scores.mean():.3f} (± {scores.std():.3f})")
         print()
 
+    # -- Résumé --
+    print("=" * 60)
+    print("Résumé : Comparaison des modèles (accuracy sur le split test)")
+    print("=" * 60)
+    for nom, acc in resultats.items():
+        print(f"  {nom:30s} → Accuracy = {acc:.3f}")
+    print()
 
-    return resultats
+
 # ============================================================
 # EXÉCUTION
 # ============================================================
 
 if __name__ == "__main__":
-    X, y, features_num, features_cat = construire_matrice("dataset_erreurs_reprises.csv",features)
+    X, y, features_num, features_cat = construire_matrice("dataset_erreurs_reprises.xlsx")
     X_train, X_test, y_train, y_test, preprocesseur = pretraiter(X, y, features_num, features_cat)
     evaluer_baselines(X_train, X_test, y_train, y_test)
