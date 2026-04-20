@@ -1,8 +1,10 @@
 # Données et fichiers Excel
 dataset_erreurs_reprises.xlsx
+dataset_enrichi.xlsx
 
 # Fichiers binaires générés
 *.pkl
+*.html
 
 # Environnement virtuel et cache
 venv/
