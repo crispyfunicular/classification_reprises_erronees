@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import warnings
 
@@ -36,15 +36,12 @@ def optimiser_modeles(X_train, y_train):
     print("=== Optimisation de la Régression Logistique ===")
     # param_grid_lr définit le catalogue des réglages à essayer pour la régression logistique.
     # Ex: 'C' contrôle la force de la pénalité (afin de limiter le surapprentissage).
+    # RÉGRESSION LOGISTIQUE CORRIGÉE
     param_grid_lr = {
-        # Différents niveaux de régularisation
         "C": [0.01, 0.1, 1, 10],
-        # Différentes méthodes mathématiques de résolution
-        "solver": ["liblinear", "lbfgs"],
-        # Avec ou sans rééquilibrage automatique des classes
+        "solver": ["lbfgs", "saga"], # Ces deux-là gèrent très bien tes 3 classes
         "class_weight": ["balanced", None],
-        # Assez de temps pour converger
-        "max_iter": [2000],
+        "max_iter": [5000],
     }
 
     # GridSearchCV s'occupe de croiser tous ces paramètres.
@@ -91,17 +88,41 @@ def optimiser_modeles(X_train, y_train):
     grid_rf.fit(X_train, y_train)
     print(f"Meilleurs paramètres RF : {grid_rf.best_params_}")
     print(f"Meilleur score F1 (CV)  : {grid_rf.best_score_:.3f}")
+ #   GRADIENT BOOSTING
+    print("\n=== Optimisation du Gradient Boosting ===")
+    param_grid_gb = {
+        "n_estimators": [50, 100],
+        "learning_rate": [0.01, 0.1, 0.2], # Vitesse d'apprentissage
+        "max_depth": [2, 3],               # Profondeur des arbres (souvent plus faible que RF)
+        "subsample": [0.8, 1.0]            # Fraction des données utilisée pour chaque arbre
+    }
+    
+    grid_gb = GridSearchCV(
+        GradientBoostingClassifier(random_state=42),
+        param_grid_gb,
+        cv=5,
+        scoring="f1_macro",
+        n_jobs=-1,
+    )
+    grid_gb.fit(X_train, y_train)
+    print(f"Meilleurs paramètres GB : {grid_gb.best_params_}")
+    print(f"Meilleur score F1 (CV)  : {grid_gb.best_score_:.3f}")
 
-    # Le script compare finalement la meilleure Régression Logistique au meilleur Random Forest
-    # pour renvoyer la meilleure version du meilleur algorithme.
-    if grid_lr.best_score_ > grid_rf.best_score_:
-        best_model = grid_lr.best_estimator_
-        best_name = "Régression Logistique optimisée"
-    else:
-        best_model = grid_rf.best_estimator_
-        best_name = "Random Forest optimisé"
+    # COMPARAISON DES TROIS MODÈLES
+    # On crée une liste pour trouver le gagnant plus facilement
+    resultats = [
+        (grid_lr.best_score_, grid_lr.best_estimator_, "Régression Logistique optimisée"),
+        (grid_rf.best_score_, grid_rf.best_estimator_, "Random Forest optimisé"),
+        (grid_gb.best_score_, grid_gb.best_estimator_, "Gradient Boosting optimisé")
+    ]
+    
+    # On trie par score décroissant et on prend le premier
+    resultats.sort(key=lambda x: x[0], reverse=True)
+    best_score, best_model, best_name = resultats[0]
 
+    print(f"\n>>>> Modèle retenu : {best_name} avec un F1 de {best_score:.3f}")
     return best_model, best_name
+
 
 
 def afficher_feature_importance(modele, preprocesseur, f_num, f_cat):

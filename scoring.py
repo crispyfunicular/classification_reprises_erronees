@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import balanced_accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV
@@ -88,6 +88,7 @@ def entrainer_et_scorer_baselines(X_train_prep, X_test_prep, y_train, y_test):
         "RandomForest": RandomForestClassifier(
             n_estimators=100, class_weight="balanced", random_state=42
         ),
+        "GradientBoosting": GradientBoostingClassifier(n_estimators=100, random_state=42),
     }
 
     scores = {}
@@ -102,7 +103,7 @@ def entrainer_et_scorer_baselines(X_train_prep, X_test_prep, y_train, y_test):
     return scores
 
 
-def optimiser_lr_rf_gridsearch(X_train_prep, y_train):
+def optimiser_lr_rf_gb_gridsearch(X_train_prep, y_train):
     param_grid_lr = {
         "C": [0.01, 0.1, 1, 10],
         # 'liblinear' ne supporte pas le multi-classes (n_classes >= 3) en multinomial
@@ -133,8 +134,23 @@ def optimiser_lr_rf_gridsearch(X_train_prep, y_train):
         n_jobs=-1,
     )
     grid_rf.fit(X_train_prep, y_train)
+    param_grid_gb = {
+        "n_estimators": [100, 200],
+        "learning_rate": [0.01, 0.1, 0.2],
+        "max_depth": [3, 5],
+        "subsample": [0.8, 1.0]
+    }
+    
+    grid_gb = GridSearchCV(
+        GradientBoostingClassifier(random_state=42),
+        param_grid_gb,
+        cv=5,
+        scoring="f1_macro",
+        n_jobs=-1
+    )
+    grid_gb.fit(X_train_prep, y_train)
 
-    return grid_lr.best_estimator_, grid_rf.best_estimator_
+    return grid_lr.best_estimator_, grid_rf.best_estimator_, grid_gb.best_estimator_
 
 
 def scorer_modele(modele, X_test_prep, y_test):
@@ -162,18 +178,20 @@ def main():
     )
     scores_enr = entrainer_et_scorer_baselines(Xe_train, Xe_test, ye_train, ye_test)
 
-    print("[3/4] Dataset BASE + Tuning (GridSearch)")
-    lr_base, rf_base = optimiser_lr_rf_gridsearch(Xb_train, yb_train)
+    # [3/4] Dataset BASE + Tuning
+    lr_base, rf_base, gb_base = optimiser_lr_rf_gb_gridsearch(Xb_train, yb_train)
     scores_base_tun = {
         "LogisticRegression": scorer_modele(lr_base, Xb_test, yb_test),
         "RandomForest": scorer_modele(rf_base, Xb_test, yb_test),
+        "GradientBoosting": scorer_modele(gb_base, Xb_test, yb_test), # New
     }
 
-    print("[4/4] Dataset ENRICHI + Tuning (GridSearch)")
-    lr_enr, rf_enr = optimiser_lr_rf_gridsearch(Xe_train, ye_train)
+    # [4/4] Dataset ENRICHI + Tuning
+    lr_enr, rf_enr, gb_enr = optimiser_lr_rf_gb_gridsearch(Xe_train, ye_train)
     scores_enr_tun = {
         "LogisticRegression": scorer_modele(lr_enr, Xe_test, ye_test),
         "RandomForest": scorer_modele(rf_enr, Xe_test, ye_test),
+        "GradientBoosting": scorer_modele(gb_enr, Xe_test, ye_test), # New
     }
 
     rows = []
@@ -230,7 +248,7 @@ def main():
     )
 
     print(df_resultats.to_string(index=False))
-    df_resultats.to_csv("resultats_scoring.csv", index=False)
+    df_resultats.to_csv("resultats_scoring2.csv", index=False)
 
 
 if __name__ == "__main__":
