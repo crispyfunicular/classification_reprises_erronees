@@ -1,9 +1,13 @@
 Dataset,Methode,Modele,F1_macro,F1_weighted,Balanced_accuracy
+Base,Baseline,GradientBoosting,0.6379,0.6293,0.6432
 Base,Baseline,LogisticRegression,0.5934,0.5748,0.6185
-Base,Baseline,RandomForest,0.6236,0.6155,0.6296
+Base,Baseline,RandomForest,0.6074,0.5993,0.6111
+Base,GridSearch,GradientBoosting,0.5469,0.5355,0.5432
 Base,GridSearch,LogisticRegression,0.5741,0.5611,0.5963
 Base,GridSearch,RandomForest,0.66,0.6501,0.658
+Enrichi,Baseline,GradientBoosting,0.7613,0.7663,0.7568
 Enrichi,Baseline,LogisticRegression,0.7206,0.7151,0.7358
-Enrichi,Baseline,RandomForest,0.6801,0.6938,0.6741
+Enrichi,Baseline,RandomForest,0.6879,0.6966,0.684
+Enrichi,GridSearch,GradientBoosting,0.6839,0.6964,0.6778
 Enrichi,GridSearch,LogisticRegression,0.6648,0.6646,0.6642
-Enrichi,GridSearch,RandomForest,0.6657,0.6774,0.6617
+Enrichi,GridSearch,RandomForest,0.672,0.6815,0.6654
