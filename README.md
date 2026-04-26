@@ -116,7 +116,7 @@ Par conséquent, avant la modélisation, le jeu de données brut nécessite une 
 
 | Personne | Rôle | Tâche concrète |
 |---|---|---|
-| **1** | Architecture & Code | Pipeline complet (`pipeline.py`, `amelioration.py`, `visualisation.py`, `README.md`) |
-| **2** | Feature Engineering | Tester différentes combinaisons de features (ablation study : retirer/ajouter des variables, comparer features numériques vs. catégorielles) |
-| **3** | Comparaison de modèles | Tester d'autres classificateurs (SVM, Gradient Boosting…) et/ou d'autres critères d'arbre (`gini` vs. `entropy`) |
-| **4** | Évaluation & Rapport | Comparer les métriques (`f1_macro`, `f1_weighted`, `balanced_accuracy`), analyser les erreurs qualitatives, rédiger discussion/conclusion/bibliographie |
+| **1. Morgane Bona-Pellissier** | Architecture & Code | Pipeline complet (`pipeline.py`, `amelioration.py`, `visualisation.py`, `README.md`) |
+| **2. Sarah Yaya** | Feature Engineering | Tester différentes combinaisons de features (ablation study : retirer/ajouter des variables, comparer features numériques vs. catégorielles) |
+| **3. Daria Tupikina** | Comparaison de modèles | Tester le classificateur Gradient Boosting et le comparer aux autres modèles |
+| **4. Salma Chatoui** | Évaluation & Rapport | Comparer les métriques (`f1_macro`, `f1_weighted`, `balanced_accuracy`), analyser les erreurs qualitatives, rédiger discussion/conclusion/bibliographie |
